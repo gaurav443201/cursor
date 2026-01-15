@@ -449,7 +449,8 @@ def get_election_state():
         "state": election_manager.get_state(),
         "total_votes": voter_blacklist.get_voter_count(),
         "chain_length": blockchain.get_chain_length(),
-        "chain_valid": blockchain.is_chain_valid()
+        "chain_valid": blockchain.is_chain_valid(),
+        "version": "1.1-fixed-fallback"
     })
 
 
