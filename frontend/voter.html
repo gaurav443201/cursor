@@ -7,9 +7,16 @@
     <meta name="description" content="VIT-ChainVote Voter Interface">
     <title>🗳️ Vote Now | VIT-ChainVote</title>
     <link rel="stylesheet" href="css/styles.css">
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
 <body>
+    <!-- Global Loading Overlay -->
+    <div id="globalLoader" class="loading-overlay hidden">
+        <div class="loader-vortex"></div>
+        <div class="loading-text" id="loaderText">Processing...</div>
+    </div>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="navbar-content">
@@ -112,6 +119,31 @@
             window.location.href = 'index.html';
         }
 
+        // Utility Functions
+        function showLoader(text = 'Processing...') {
+            const loader = document.getElementById('globalLoader');
+            if (loader) {
+                document.getElementById('loaderText').textContent = text;
+                loader.classList.remove('hidden');
+            }
+        }
+
+        function hideLoader() {
+            const loader = document.getElementById('globalLoader');
+            if (loader) loader.classList.add('hidden');
+        }
+
+        function setBtnLoading(btn, isLoading) {
+            if (!btn) return;
+            if (isLoading) {
+                btn.classList.add('btn-loading');
+                btn.disabled = true;
+            } else {
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+            }
+        }
+
         document.getElementById('voterInfo').textContent = voterEmail;
 
         // Load initial state
@@ -176,7 +208,7 @@
                                 <h3 class="candidate-name">${c.name}</h3>
                                 <span class="candidate-department">${c.department}</span>
                                 <p class="candidate-manifesto">"${c.manifesto}"</p>
-                                <button class="btn btn-primary" onclick="castVote('${c.id}')" style="width: 100%;">
+                                <button class="btn btn-primary" onclick="castVote('${c.id}', this)" style="width: 100%;">
                                     🗳️ Vote for ${c.name}
                                 </button>
                             </div>
@@ -193,8 +225,11 @@
             }
         }
 
-        async function castVote(candidateId) {
+        async function castVote(candidateId, btn) {
             if (!confirm('Confirm your vote? This action cannot be undone.')) return;
+
+            setBtnLoading(btn, true);
+            showLoader('Mining your vote into the block...');
 
             try {
                 const response = await fetch(`${API_URL}/voter/vote`, {
@@ -209,6 +244,13 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    confetti({
+                        particleCount: 200,
+                        spread: 100,
+                        origin: { y: 0.6 },
+                        colors: ['#667eea', '#764ba2', '#4facfe', '#00f2fe']
+                    });
+
                     // Display confirmation
                     document.getElementById('transactionHash').textContent = data.transaction_hash;
                     document.getElementById('blockIndex').textContent = data.block_index;
@@ -227,6 +269,9 @@
                 }
             } catch (error) {
                 alert('❌ Error: ' + error.message);
+            } finally {
+                setBtnLoading(btn, false);
+                hideLoader();
             }
         }
 
