@@ -225,4 +225,3 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 console.log('%c🗳️ VIT-ChainVote', 'font-size: 24px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;');
 console.log('%cSecure Blockchain Voting System', 'font-size: 14px; color: #667eea;');
 console.log('%cPowered by Proof-of-Work Consensus & Google Gemini AI', 'font-size: 12px; color: #999;');
-
