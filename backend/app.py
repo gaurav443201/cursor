@@ -12,6 +12,15 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+import logging
+# Configure professional logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger(__name__)
+
 from blockchain import Blockchain
 from models import CandidateRegistry, VoterBlacklist, ElectionManager
 from otp_service import OTPService
@@ -76,7 +85,7 @@ def admin_login():
             else:
                 return jsonify({"success": False, "message": "Failed to send OTP email"}), 500
         except Exception as e:
-            print(f"⚠️  Admin OTP error: {str(e)}")
+            logger.error(f"⚠️  Admin OTP error: {str(e)}")
             return jsonify({"success": False, "message": "OTP service error"}), 500
     
     return jsonify({"success": False, "message": "Unauthorized access"}), 403
@@ -327,7 +336,7 @@ def voter_login():
         else:
             return jsonify({"success": False, "message": "Failed to send OTP"}), 500
     except Exception as e:
-        print(f"⚠️  OTP service error: {str(e)}")
+        logger.error(f"⚠️  OTP service error: {str(e)}")
         return jsonify({"success": False, "message": "Email service error"}), 500
 
 
@@ -571,4 +580,3 @@ if __name__ == '__main__':
     print(f"🔒 Difficulty: {blockchain.difficulty}")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
-
