@@ -3,7 +3,8 @@
  * Handles authentication, API communication, and UI interactions
  */
 
-const API_URL = window.CONFIG?.API_URL || 'http://localhost:5000/api';
+// Use API_URL from config.js (already loaded)
+// No need to declare it again - config.js already sets window.CONFIG.API_URL
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -23,7 +24,7 @@ function showModal(modalId) {
 
 async function updateElectionStatus() {
     try {
-        const response = await fetch(`${API_URL}/election/state`);
+        const response = await fetch(`${window.CONFIG.API_URL}/election/state`);
         const data = await response.json();
 
         if (data.success) {
@@ -63,7 +64,7 @@ document.getElementById('adminLoginForm')?.addEventListener('submit', async (e) 
     const email = document.getElementById('adminEmail').value.trim();
 
     try {
-        const response = await fetch(`${API_URL}/admin/login`, {
+        const response = await fetch(`${window.CONFIG.API_URL}/admin/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -114,7 +115,7 @@ document.getElementById('voterLoginForm')?.addEventListener('submit', async (e) 
     }
 
     try {
-        const response = await fetch(`${API_URL}/voter/login`, {
+        const response = await fetch(`${window.CONFIG.API_URL}/voter/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -152,18 +153,13 @@ document.getElementById('otpForm')?.addEventListener('submit', async (e) => {
     const email = localStorage.getItem('voterEmail');
     const otp = document.getElementById('otpCode').value.trim();
 
-    if (!email || !otp) {
-        alert('❌ Invalid session or OTP');
-        return;
-    }
-
-    if (otp.length !== 6 || !/^\d{6}$/.test(otp)) {
-        alert('❌ OTP must be exactly 6 digits');
+    if (!otp || otp.length !== 6) {
+        alert('❌ Please enter a valid 6-digit OTP');
         return;
     }
 
     try {
-        const response = await fetch(`${API_URL}/voter/verify-otp`, {
+        const response = await fetch(`${window.CONFIG.API_URL}/voter/verify-otp`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -174,7 +170,7 @@ document.getElementById('otpForm')?.addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (data.success) {
-            // OTP verified - redirect to voting page
+            // Redirect to voter page
             window.location.href = 'voter.html';
         } else {
             alert('❌ ' + data.message);
@@ -184,44 +180,3 @@ document.getElementById('otpForm')?.addEventListener('submit', async (e) => {
     }
 });
 
-// ============================================================================
-// AUTO-FOCUS OTP INPUT
-// ============================================================================
-
-document.getElementById('otpCode')?.addEventListener('input', (e) => {
-    // Only allow digits
-    e.target.value = e.target.value.replace(/\D/g, '');
-});
-
-// ============================================================================
-// KEYBOARD SHORTCUTS
-// ============================================================================
-
-document.addEventListener('keydown', (e) => {
-    // Escape key closes modals
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.classList.add('hidden');
-        });
-    }
-});
-
-// ============================================================================
-// CLICK OUTSIDE TO CLOSE MODAL
-// ============================================================================
-
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            overlay.classList.add('hidden');
-        }
-    });
-});
-
-// ============================================================================
-// CONSOLE BRANDING
-// ============================================================================
-
-console.log('%c🗳️ VIT-ChainVote', 'font-size: 24px; font-weight: bold; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;');
-console.log('%cSecure Blockchain Voting System', 'font-size: 14px; color: #667eea;');
-console.log('%cPowered by Proof-of-Work Consensus & Google Gemini AI', 'font-size: 12px; color: #999;');
