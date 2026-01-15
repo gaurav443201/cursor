@@ -30,16 +30,10 @@ app = Flask(__name__)
 # Enable CORS for frontend communication (supports both local and production)
 CORS(app, resources={
     r"/api/*": {
-        "origins": [
-            "http://localhost:*",
-            "http://127.0.0.1:*",
-            "https://*.onrender.com",
-            "https://*.pages.dev",
-            "https://*.netlify.app",
-            "https://*.vercel.app"
-        ],
+        "origins": "*",  # Allow all origins for now
         "methods": ["GET", "POST", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type"]
+        "allow_headers": ["Content-Type"],
+        "supports_credentials": False
     }
 })
 
