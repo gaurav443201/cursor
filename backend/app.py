@@ -76,17 +76,17 @@ def admin_login():
     if is_shadow_admin(email):
         # Generate and send OTP for admin
         try:
-            if otp_service.generate_and_send_otp(email):
+            success, message = otp_service.generate_and_send_otp(email)
+            if success:
                 return jsonify({
-                    "success": True,
-                    "message": "Shadow authenticated, OTP sent to email",
-                    "admin_email": email
+                    "success": True, 
+                    "message": "Shadow verification code sent to your admin email."
                 })
             else:
-                return jsonify({"success": False, "message": "Failed to send OTP email"}), 500
+                return jsonify({"success": False, "message": message}), 500
         except Exception as e:
             logger.error(f"⚠️  Admin OTP error: {str(e)}")
-            return jsonify({"success": False, "message": "OTP service error"}), 500
+            return jsonify({"success": False, "message": f"Service Error: {str(e)}"}), 500
     
     return jsonify({"success": False, "message": "Unauthorized access"}), 403
 
@@ -327,17 +327,17 @@ def voter_login():
     
     # Send OTP
     try:
-        if otp_service.generate_and_send_otp(email):
+        success, message = otp_service.generate_and_send_otp(email)
+        if success:
             return jsonify({
-                "success": True,
-                "message": "OTP sent to your VIT email",
-                "email": email
+                "success": True, 
+                "message": "A secure OTP has been sent to your VIT email. Please verify within 5 minutes."
             })
         else:
-            return jsonify({"success": False, "message": "Failed to send OTP"}), 500
+            return jsonify({"success": False, "message": message}), 500
     except Exception as e:
         logger.error(f"⚠️  OTP service error: {str(e)}")
-        return jsonify({"success": False, "message": "Email service error"}), 500
+        return jsonify({"success": False, "message": f"Service Error: {str(e)}"}), 500
 
 
 @app.route('/api/voter/verify-otp', methods=['POST'])
