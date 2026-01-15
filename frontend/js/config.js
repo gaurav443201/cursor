@@ -22,3 +22,4 @@ window.CONFIG = {
 console.log(`🔧 Environment: ${isLocalhost ? 'Development' : 'Production'}`);
 console.log(`🌐 API URL: ${API_URL}`);
 
+
