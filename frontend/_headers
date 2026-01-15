@@ -1,0 +1,4 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://voteapp-7eeh.onrender.com https://*.onrender.com
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
