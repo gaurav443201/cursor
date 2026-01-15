@@ -10,6 +10,9 @@ import os
 from email.message import EmailMessage
 from typing import Dict
 
+import logging
+logger = logging.getLogger(__name__)
+
 class OTPService:
     """
     Manages OTP generation, storage, and email delivery using SSL for speed.
@@ -69,19 +72,44 @@ class OTPService:
         msg.set_content(f"Your VIT-ChainVote OTP is: {otp}\n\nThis code will expire in 5 minutes.")
 
         try:
-            with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
+            # Set a 10s timeout to prevent hanging the whole backend if Gmail is slow
+            with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port, timeout=10.0) as server:
                 server.login(self.sender_email, self.app_password)
                 server.send_message(msg)
-            print(f"✅ OTP SENT SUCCESSFULLY to {recipient_email}")
+            logger.info(f"✅ OTP SENT SUCCESSFULLY to {recipient_email}")
             return True
+        except smtplib.SMTPAuthenticationError:
+            logger.error(f"❌ SMTP AUTH ERROR: Check EMAIL_USER and EMAIL_PASS on Render")
+            return False
         except Exception as e:
-            print(f"❌ ERROR SENDING EMAIL: {e}")
+            logger.error(f"❌ ERROR SENDING EMAIL: {str(e)}")
             return False
             
-    def generate_and_send_otp(self, email: str) -> bool:
+    def generate_and_send_otp(self, email: str) -> (bool, str):
         """
-        Generate OTP, store it, and send via email
+        Generate OTP, store it, and send via email.
+        Returns (success, error_message)
         """
         otp = self.generate_otp()
         self.store_otp(email, otp)
-        return self.send_otp_email(email, otp)
+        
+        msg = EmailMessage()
+        msg["Subject"] = "Your OTP Code - VIT-ChainVote"
+        msg["From"] = self.sender_email
+        msg["To"] = email
+        msg.set_content(f"Your VIT-ChainVote OTP is: {otp}\n\nThis code will expire in 5 min.")
+
+        try:
+            with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port, timeout=10.0) as server:
+                server.login(self.sender_email, self.app_password)
+                server.send_message(msg)
+            logger.info(f"✅ OTP SENT to {email}")
+            return True, "OTP sent successfully"
+        except smtplib.SMTPAuthenticationError:
+            err = "SMTP Auth Failed: Check EMAIL_USER/PASS on Render"
+            logger.error(f"❌ {err}")
+            return False, err
+        except Exception as e:
+            err = f"SMTP Error: {str(e)}"
+            logger.error(f"❌ {err}")
+            return False, err
