@@ -7,9 +7,16 @@
     <meta name="description" content="VIT-ChainVote Admin Dashboard">
     <title>🔐 Shadow Dashboard | VIT-ChainVote</title>
     <link rel="stylesheet" href="css/styles.css">
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
 <body>
+    <!-- Global Loading Overlay -->
+    <div id="globalLoader" class="loading-overlay hidden">
+        <div class="loader-vortex"></div>
+        <div class="loading-text" id="loaderText">Processing...</div>
+    </div>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="navbar-content">
@@ -138,6 +145,32 @@
             window.location.href = 'index.html';
         }
 
+        // Utility Functions
+        function showLoader(text = 'Processing...') {
+            const loader = document.getElementById('globalLoader');
+            if (loader) {
+                document.getElementById('loaderText').textContent = text;
+                loader.classList.remove('hidden');
+            }
+        }
+
+        function hideLoader() {
+            const loader = document.getElementById('globalLoader');
+            if (loader) loader.classList.add('hidden');
+        }
+
+        function setBtnLoading(btnId, isLoading) {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            if (isLoading) {
+                btn.classList.add('btn-loading');
+                btn.disabled = true;
+            } else {
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+            }
+        }
+
         document.getElementById('adminEmail').textContent = adminEmail;
 
         // Load initial data
@@ -148,9 +181,12 @@
         // Candidate Form
         document.getElementById('candidateForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            const name = document.getElementById('candidateName').value;
+            const name = document.getElementById('candidateName').value.trim();
             const department = document.getElementById('candidateDepartment').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            setBtnLoading(submitBtn.id || 'regBtn', true);
+            showLoader('Gemini AI is generating a professional manifesto...');
 
             try {
                 const response = await fetch(`${API_URL}/admin/candidate/add`, {
@@ -162,6 +198,12 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#667eea', '#764ba2', '#4facfe']
+                    });
                     alert('✅ Candidate registered with AI-generated manifesto!');
                     document.getElementById('candidateForm').reset();
                     loadCandidates();
@@ -170,6 +212,9 @@
                 }
             } catch (error) {
                 alert('❌ Error: ' + error.message);
+            } finally {
+                setBtnLoading(submitBtn.id || 'regBtn', false);
+                hideLoader();
             }
         });
 
