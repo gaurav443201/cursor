@@ -7,9 +7,16 @@
     <meta name="description" content="VIT-ChainVote - Secure Blockchain Voting System for VIT Institute Elections">
     <title>🗳️ VIT-ChainVote | Secure Blockchain Voting</title>
     <link rel="stylesheet" href="css/styles.css">
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
 <body>
+    <!-- Global Loading Overlay -->
+    <div id="globalLoader" class="loading-overlay hidden">
+        <div class="loader-vortex"></div>
+        <div class="loading-text" id="loaderText">Processing...</div>
+    </div>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="navbar-content">
@@ -296,12 +303,159 @@
         });
 
         // Utility Functions
+        function showLoader(text = 'Processing...') {
+            const loader = document.getElementById('globalLoader');
+            document.getElementById('loaderText').textContent = text;
+            loader.classList.remove('hidden');
+        }
+
+        function hideLoader() {
+            document.getElementById('globalLoader').classList.add('hidden');
+        }
+
+        function setBtnLoading(btnId, isLoading) {
+            const btn = document.getElementById(btnId);
+            if (!btn) return;
+            if (isLoading) {
+                btn.classList.add('btn-loading');
+                btn.disabled = true;
+            } else {
+                btn.classList.remove('btn-loading');
+                btn.disabled = false;
+            }
+        }
+
+        // Admin Login Flow
+        document.getElementById('adminLoginForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('adminEmail').value.trim();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            setBtnLoading(submitBtn.id || 'adminSubmitBtn', true);
+            showLoader('Authenticating Shadow...');
+
+            try {
+                const response = await fetch(`${API_URL}/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('pendingAdminEmail', email);
+                    closeModal('adminLoginModal');
+
+                    const otpModal = document.getElementById('otpModal');
+                    const otpTitle = otpModal.querySelector('.modal-title');
+                    const otpText = otpModal.querySelector('p');
+
+                    otpTitle.textContent = "🔐 Admin Verification";
+                    otpText.textContent = data.message;
+                    document.getElementById('otpForm').dataset.type = 'admin';
+
+                    showModal('otpModal');
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Connection Error: ' + error.message);
+            } finally {
+                setBtnLoading(submitBtn.id || 'adminSubmitBtn', false);
+                hideLoader();
+            }
+        });
+
+        // Voter Login Flow
+        document.getElementById('voterLoginForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('voterEmail').value.trim().toLowerCase();
+            const department = document.getElementById('voterDepartment').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            setBtnLoading(submitBtn.id || 'voterSubmitBtn', true);
+            showLoader('Sending OTP...');
+
+            try {
+                const response = await fetch(`${API_URL}/voter/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, department })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('voterEmail', email);
+                    localStorage.setItem('voterDepartment', department);
+                    closeModal('voterLoginModal');
+
+                    const otpModal = document.getElementById('otpModal');
+                    const otpTitle = otpModal.querySelector('.modal-title');
+                    const otpText = otpModal.querySelector('p');
+
+                    otpTitle.textContent = "📧 Enter OTP";
+                    otpText.textContent = data.message;
+                    document.getElementById('otpForm').dataset.type = 'voter';
+
+                    showModal('otpModal');
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Connection Error: ' + error.message);
+            } finally {
+                setBtnLoading(submitBtn.id || 'voterSubmitBtn', false);
+                hideLoader();
+            }
+        });
+
+        // OTP Verification Flow
+        document.getElementById('otpForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const otp = document.getElementById('otpCode').value.trim();
+            const type = e.target.dataset.type;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+
+            setBtnLoading(submitBtn.id || 'otpSubmitBtn', true);
+            showLoader('Verifying...');
+
+            const endpoint = type === 'admin' ? '/admin/verify-otp' : '/voter/verify-otp';
+            const emailKey = type === 'admin' ? 'pendingAdminEmail' : 'voterEmail';
+            const email = localStorage.getItem(emailKey);
+
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, otp })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    if (type === 'admin') {
+                        localStorage.setItem('adminEmail', email);
+                        localStorage.removeItem('pendingAdminEmail');
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'voter.html';
+                    }
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            } finally {
+                setBtnLoading(submitBtn.id || 'otpSubmitBtn', false);
+                hideLoader();
+            }
+        });
+
         function showModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         function showAdminLogin() { showModal('adminLoginModal'); }
         function showVoterLogin() { showModal('voterLoginModal'); }
 
-        // Election Status
         async function updateStatus() {
             try {
                 const response = await fetch(`${API_URL}/election/state`);
@@ -310,13 +464,11 @@
                     const badge = document.getElementById('electionStatus');
                     const state = data.state.toUpperCase();
                     badge.className = `status-badge status-${data.state}`;
-                    badge.textContent = `${data.state === 'waiting' ? '⏸️' : data.state === 'live' ? '🔴' : '🔒'} ${state}`;
+                    badge.innerHTML = `<span>${data.state === 'waiting' ? '⏸️' : data.state === 'live' ? '🔴' : '🔒'}</span> ${state}`;
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { }
         }
-        setInterval(updateStatus, 3000);
+        setInterval(updateStatus, 5000);
         updateStatus();
     </script>
 </body>
