@@ -21,26 +21,26 @@
     --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     --danger-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    
+
     --bg-dark: #0a0e27;
     --bg-card: rgba(255, 255, 255, 0.05);
     --bg-glass: rgba(255, 255, 255, 0.1);
-    
+
     --text-primary: #ffffff;
     --text-secondary: #b8b8d1;
     --text-muted: #6b7280;
-    
+
     --border-color: rgba(255, 255, 255, 0.1);
     --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
     --shadow-xl: 0 30px 80px rgba(0, 0, 0, 0.7);
-    
+
     /* Spacing */
     --spacing-xs: 0.5rem;
     --spacing-sm: 1rem;
     --spacing-md: 1.5rem;
     --spacing-lg: 2rem;
     --spacing-xl: 3rem;
-    
+
     /* Border Radius */
     --radius-sm: 8px;
     --radius-md: 12px;
@@ -68,7 +68,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
+    background:
         radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
         radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
     z-index: -1;
@@ -79,7 +79,12 @@ body::before {
    TYPOGRAPHY
    ============================================================================ */
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: 'Orbitron', sans-serif;
     font-weight: 900;
     letter-spacing: -0.02em;
@@ -266,6 +271,28 @@ p {
 
 .form-input::placeholder {
     color: var(--text-muted);
+}
+
+/* Select dropdown styling */
+.form-select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+.form-select option {
+    background: #1a1f3a;
+    color: #ffffff;
+    padding: 1rem;
+}
+
+.form-select option:hover,
+.form-select option:checked {
+    background: #667eea;
+    color: #ffffff;
 }
 
 /* ============================================================================
@@ -533,6 +560,7 @@ p {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -543,6 +571,7 @@ p {
         opacity: 0;
         transform: translateY(30px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -554,6 +583,7 @@ p {
         opacity: 0;
         transform: scale(0.9);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -567,9 +597,12 @@ p {
 }
 
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
     }
+
     50% {
         opacity: 0.7;
     }
@@ -617,19 +650,19 @@ p {
     h1 {
         font-size: 2.5rem;
     }
-    
+
     .hero-title {
         font-size: 3rem;
     }
-    
+
     .candidates-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .hero-buttons {
         flex-direction: column;
     }
-    
+
     .navbar-content {
         flex-direction: column;
         gap: var(--spacing-sm);
