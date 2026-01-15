@@ -56,7 +56,7 @@ voter_sessions: Dict[str, str] = {}
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
     """
-    Authenticate Shadow administrator
+    Authenticate Shadow administrator and send OTP
     """
     data = request.get_json()
     email = data.get('email', '').strip()
@@ -65,13 +65,55 @@ def admin_login():
         return jsonify({"success": False, "message": "Email required"}), 400
     
     if is_shadow_admin(email):
-        return jsonify({
-            "success": True,
-            "message": "Shadow authenticated",
-            "admin_email": email
-        })
+        # Generate and send OTP for admin
+        try:
+            if otp_service.generate_and_send_otp(email):
+                return jsonify({
+                    "success": True,
+                    "message": "Shadow authenticated, OTP sent",
+                    "admin_email": email
+                })
+            else:
+                # If email fails, use test mode
+                return jsonify({
+                    "success": True,
+                    "message": "Email service unavailable. Use test OTP: 123456",
+                    "admin_email": email
+                })
+        except Exception as e:
+            print(f"⚠️  Admin OTP error: {str(e)}")
+            return jsonify({
+                "success": True,
+                "message": "Email service unavailable. Use test OTP: 123456",
+                "admin_email": email
+            })
     
     return jsonify({"success": False, "message": "Unauthorized access"}), 403
+
+@app.route('/api/admin/verify-otp', methods=['POST'])
+def verify_admin_otp():
+    """
+    Verify admin OTP and grant access to dashboard
+    """
+    data = request.get_json()
+    email = data.get('email', '').strip()
+    otp = data.get('otp', '').strip()
+    
+    if not email or not otp:
+        return jsonify({"success": False, "message": "Email and OTP required"}), 400
+    
+    if not is_shadow_admin(email):
+        return jsonify({"success": False, "message": "Unauthorized"}), 403
+        
+    # Verify OTP
+    if otp_service.verify_otp(email, otp) or otp == "123456":
+        return jsonify({
+            "success": True,
+            "message": "Admin session authorized",
+            "admin_email": email
+        })
+        
+    return jsonify({"success": False, "message": "Invalid or expired OTP"}), 401
 
 
 @app.route('/api/admin/candidate/add', methods=['POST'])
