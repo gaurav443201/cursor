@@ -62,7 +62,7 @@ def admin_login():
     email = data.get('email', '').strip()
     
     if not email:
-        return jsonify({"success": False, "message": "Email required"}), 400
+        return jsonify({"success": False, "message": "Administrator email is required"}), 400
     
     if is_shadow_admin(email):
         # Generate and send OTP for admin
@@ -70,23 +70,14 @@ def admin_login():
             if otp_service.generate_and_send_otp(email):
                 return jsonify({
                     "success": True,
-                    "message": "Shadow authenticated, OTP sent",
+                    "message": "Shadow authenticated, OTP sent to email",
                     "admin_email": email
                 })
             else:
-                # If email fails, use test mode
-                return jsonify({
-                    "success": True,
-                    "message": "Email service unavailable. Use test OTP: 123456",
-                    "admin_email": email
-                })
+                return jsonify({"success": False, "message": "Failed to send OTP email"}), 500
         except Exception as e:
             print(f"⚠️  Admin OTP error: {str(e)}")
-            return jsonify({
-                "success": True,
-                "message": "Email service unavailable. Use test OTP: 123456",
-                "admin_email": email
-            })
+            return jsonify({"success": False, "message": "OTP service error"}), 500
     
     return jsonify({"success": False, "message": "Unauthorized access"}), 403
 
@@ -100,13 +91,13 @@ def verify_admin_otp():
     otp = data.get('otp', '').strip()
     
     if not email or not otp:
-        return jsonify({"success": False, "message": "Email and OTP required"}), 400
+        return jsonify({"success": False, "message": "Both email and OTP are required"}), 400
     
     if not is_shadow_admin(email):
         return jsonify({"success": False, "message": "Unauthorized"}), 403
         
     # Verify OTP
-    if otp_service.verify_otp(email, otp) or otp == "123456":
+    if otp_service.verify_otp(email, otp):
         return jsonify({
             "success": True,
             "message": "Admin session authorized",
@@ -309,7 +300,7 @@ def voter_login():
     department = data.get('department', '').strip().upper()
     
     if not email or not department:
-        return jsonify({"success": False, "message": "Email and department required"}), 400
+        return jsonify({"success": False, "message": "Registration requires both email and department"}), 400
     
     if not is_valid_vit_email(email):
         return jsonify({"success": False, "message": "Invalid VIT email format"}), 400
@@ -330,23 +321,14 @@ def voter_login():
         if otp_service.generate_and_send_otp(email):
             return jsonify({
                 "success": True,
-                "message": "OTP sent to your email",
+                "message": "OTP sent to your VIT email",
                 "email": email
             })
         else:
-            # If email fails, tell user to use test OTP
-            return jsonify({
-                "success": True,
-                "message": "Email service unavailable. Use test OTP: 123456",
-                "email": email
-            })
+            return jsonify({"success": False, "message": "Failed to send OTP"}), 500
     except Exception as e:
         print(f"⚠️  OTP service error: {str(e)}")
-        return jsonify({
-            "success": True,
-            "message": "Email service unavailable. Use test OTP: 123456",
-            "email": email
-        })
+        return jsonify({"success": False, "message": "Email service error"}), 500
 
 
 @app.route('/api/voter/verify-otp', methods=['POST'])
@@ -367,17 +349,6 @@ def verify_otp():
         return jsonify({
             "success": True,
             "message": "OTP verified successfully",
-            "email": email,
-            "department": department
-        })
-    
-    # Fallback: Accept "123456" as test OTP if email service is down
-    if otp == "123456" and email in voter_sessions:
-        print(f"⚠️  Using test OTP for {email}")
-        department = voter_sessions.get(email, '')
-        return jsonify({
-            "success": True,
-            "message": "OTP verified successfully (test mode)",
             "email": email,
             "department": department
         })
@@ -492,7 +463,7 @@ def get_election_state():
         "total_votes": voter_blacklist.get_voter_count(),
         "chain_length": blockchain.get_chain_length(),
         "chain_valid": blockchain.is_chain_valid(),
-        "version": "1.1-fixed-fallback"
+        "version": "1.2-Legit-Fast"
     })
 
 
@@ -600,3 +571,4 @@ if __name__ == '__main__':
     print(f"🔒 Difficulty: {blockchain.difficulty}")
     
     app.run(host='0.0.0.0', port=port, debug=debug)
+
