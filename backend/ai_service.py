@@ -40,7 +40,14 @@ class AIService:
         """
         
         try:
-            response = self.model.generate_content(prompt)
+            # Set timeout for API call
+            response = self.model.generate_content(
+                prompt,
+                generation_config={
+                    'temperature': 0.9,
+                    'max_output_tokens': 100,
+                }
+            )
             manifesto = response.text.strip()
             
             # Ensure it's roughly 2 sentences
@@ -51,7 +58,7 @@ class AIService:
             return manifesto
             
         except Exception as e:
-            print(f"Error generating manifesto: {e}")
+            print(f"⚠️  Error generating manifesto: {e}")
             return f"Committed to excellence in {department}. Together, we'll build a stronger future for our department!"
     
     def analyze_election_results(self, results: Dict[str, Dict]) -> str:
